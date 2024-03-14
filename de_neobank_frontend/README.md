@@ -1,4 +1,4 @@
-GitHub Rule Frontend:
+GitHub Rule:
 - Convention style: gh-username_datestamp_feature
 - Review code rules --> in Pairs
 - Merging rules: Explicit, Engage with it

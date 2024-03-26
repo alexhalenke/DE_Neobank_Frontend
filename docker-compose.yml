@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  streamlit:
+    build:
+      context: .
+    restart: always
+    volumes:
+      - ./.streamlit:/app/.streamlit/
+      - ./neobank_gold:/app/neobank_gold/
+    command: ["streamlit", "run", "neobank_gold/app.py"]
+    ports:
+      - 8501:8501
+
+    stdin_open: true # eq. to -i in docker run (allows breakpoints)
+    tty: true # eq. to -t in docker run (allows breakpoints)

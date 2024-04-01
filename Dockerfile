@@ -11,7 +11,7 @@ WORKDIR /app
 
 COPY ./pyproject.toml  ./pyproject.toml
 COPY ./poetry.lock  ./poetry.lock
-COPY ./neobank_gold  ./neobank_gold
+COPY ./de_neobank_frontend  ./neobank_gold
 
 RUN apt-get update \
     && apt-get -y upgrade \

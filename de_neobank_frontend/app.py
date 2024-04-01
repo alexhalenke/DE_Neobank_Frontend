@@ -21,12 +21,31 @@ def run_query(query):
     rows = [dict(row) for row in rows_raw]
     return rows
 
-rows = run_query("SELECT word FROM `bigquery-public-data.samples.shakespeare` LIMIT 10")
+rows = run_query("SELECT * FROM `modern-water-402010.neobank_Gold_Tier.unique_customers_mart` LIMIT 100")
+st.dataframe(rows)
+
+moving_average = run_query("SELECT * FROM `modern-water-402010.neobank_Gold_Tier.moving_avg_trx_mart` LIMIT 1000")
+chart_data = pd.DataFrame(moving_average, columns=["year", "month", "moving_avg"])
+
+selected_year = st.sidebar.selectbox("Select Year", chart_data['year'].unique())
+
+filtered_data = chart_data[chart_data['year'] == selected_year]
+#chart_data['date'] = chart_data['year'] + chart_data['month']
+filtered_data = filtered_data[['month', 'moving_avg']]
+monthly_sum = filtered_data.groupby('month')['moving_avg'].sum()
+st.line_chart(monthly_sum)
+
+
+
+def plot_line_chart(moving_average):
+    device_counts = moving_average['month'].value_counts()
+    st.line_chart(device_counts)
+
 
 # Print results.
 st.write("Some wise words from Shakespeare:")
-for row in rows:
-    st.write("✍️ " + row['word'])
+#for row in rows:
+#    st.write("✍️ " + row['word'])
 
 import streamlit as st
 import pandas as pd
@@ -83,9 +102,10 @@ def main():
     department = st.sidebar.radio('Select Department', ['Finance', 'Marketing'])
 
     if department == 'Finance':
-        finance_dashboard()
+        plot_line_chart()
     elif department == 'Marketing':
         marketing_dashboard()
+        finance_dashboard()
 
 if __name__ == "__main__":
     main()

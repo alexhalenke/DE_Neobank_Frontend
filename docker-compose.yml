@@ -6,7 +6,7 @@ services:
     restart: always
     volumes:
       - ./.streamlit:/app/.streamlit/
-      - ./neobank_gold:/app/neobank_gold/
+      - ./de_neobank_frontend:/app/neobank_gold/
     command: ["streamlit", "run", "neobank_gold/app.py"]
     ports:
       - 8501:8501

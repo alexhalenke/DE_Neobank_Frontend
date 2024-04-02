@@ -2,9 +2,9 @@ from sqlalchemy import *
 from sqlalchemy.schema import *
 import os
 from langchain.sql_database import SQLDatabase
+from langchain.chains import create_sql_query_chain
 from langchain_openai import ChatOpenAI
-from langchain_community.agent_toolkits import create_sql_agent
-
+from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 
 
 service_account_file = "/home/ahalenke/.gcp_keys/le-wagon-de-bootcamp.json" # Change to where your service account key file is located
@@ -18,5 +18,9 @@ db = SQLDatabase.from_uri(sqlalchemy_url)
 
 #Convert questions to a SQL query
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=True)
-agent_executor.invoke({"How many unique transactions happened in december 2018?"})
+chain = create_sql_query_chain(llm, db)
+response = chain.invoke({"question": "How many unique users?. Give me an integer"})
+
+print(f'This is the SQL Query:\n{response}')
+
+print(db.run(response))

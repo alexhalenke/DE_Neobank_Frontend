@@ -21,10 +21,9 @@ def run_query(query):
     rows = [dict(row) for row in rows_raw]
     return rows
 
-rows = run_query("SELECT * FROM `modern-water-402010.neobank_Gold_Tier.unique_customers_mart` LIMIT 100")
-st.dataframe(rows)
 
-moving_average = run_query("SELECT * FROM `modern-water-402010.neobank_Gold_Tier.moving_avg_trx_mart` LIMIT 1000")
+
+moving_average = run_query("SELECT * FROM `sylvan-apogee-402010.neobank_Gold_Tier.moving_avg_trx_mart` LIMIT 1000")
 chart_data = pd.DataFrame(moving_average, columns=["year", "month", "moving_avg"])
 
 selected_year = st.sidebar.selectbox("Select Year", chart_data['year'].unique())
@@ -42,8 +41,9 @@ def plot_line_chart(moving_average):
     st.line_chart(device_counts)
 
 
+
 # Print results.
-st.write("Some wise words from Shakespeare:")
+# st.write("Some wise words from Shakespeare:")
 #for row in rows:
 #    st.write("✍️ " + row['word'])
 
@@ -59,6 +59,25 @@ credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
 client = bigquery.Client(credentials=credentials)
+
+def total_amt_transaction_type():
+    df = run_query("SELECT total_amount, year, transactions_type,transaction_group, direction, month FROM `sylvan-apogee-402010.neobank_Gold_Tier.amt_trx_mart` LIMIT 100")
+    data= pd.DataFrame(df , columns=['total_amount','transaction_group','year','month','direction'])
+
+
+
+
+    #year_filter = st.multiselect('Select Year', options=list(data['year'].unique()), default=list(data['year'].unique()))
+    #month_filter = st.multiselect('Select Month', options=list(data['month'].unique()), default=list(data['month'].unique()))
+    direction_filter = st.multiselect('Select direction', options=list(data['direction'].unique()), default=list(data['direction'].unique()))
+    filtered_data =  data['direction'].isin(direction_filter)
+
+   # st.write(filtered_data)
+    st.markdown("## List of unique customers Per Device")
+    import plotly.express as px
+    fig = px.bar(filtered_data, x='transaction_group', y='total_amount', color='transaction_group')
+    st.plotly_chart(fig)
+
 
 
 
@@ -77,6 +96,10 @@ def finance_dashboard():
     plot_bar_chart(df_device)
 
 def marketing_dashboard():
+    st.markdown("## Total users per country")
+    plot_country_bar_chart(df_country)
+
+def chatgpt_dashboard():
     st.markdown("## Total users per country")
     plot_country_bar_chart(df_country)
 
@@ -99,13 +122,19 @@ df_country = pd.DataFrame(data_country)
 # Main Streamlit app
 def main():
     st.sidebar.title('Departments')
-    department = st.sidebar.radio('Select Department', ['Finance', 'Marketing'])
+    department = st.sidebar.radio('Select Department', ['Finance', 'Marketing','Interactive requests'])
+
 
     if department == 'Finance':
-        plot_line_chart()
+       # plot_line_chart()
+        total_amt_transaction_type()
     elif department == 'Marketing':
         marketing_dashboard()
         finance_dashboard()
+        plot_bar_chart()
+    elif department == 'Interactive requests':
+        chatgpt_dashboard()
+
 
 if __name__ == "__main__":
     main()

@@ -21,14 +21,8 @@ def query_database(question):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
     agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=False)
     response = agent_executor.invoke({"input": question})
-
     return response
 
-
-def main():
-    question = "How many unique transactions happened in december 2018?"
-    response = query_database(question)
-    print(response)
-
 if __name__ == "__main__":
-    main()
+    result = query_database("How many transations happened in 2018?")
+    print(result)

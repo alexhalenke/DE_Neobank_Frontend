@@ -45,13 +45,30 @@ def moving_average_transactions():
     filtered_data2 = data2[ data2['year'].isin(year_filter2)  ]
     st.write(filtered_data2)
 
-
     fig2 = px.bar(filtered_data2, x='month', y="moving_avg", color='direction')
     st.plotly_chart(fig2)
-# Function to plot bar chart using Streamlit
-def plot_bar_chart(df):
-    device_counts = df['Device_Type'].value_counts()
-    st.bar_chart(device_counts)
+
+
+
+
+def unique_number_users() :
+    import plotly.graph_objects as go
+    df4 = run_query("SELECT total_customers, device_type FROM `sylvan-apogee-402010.neobank_Gold_Tier.customers_by_device_type_mart`")
+    data4 = pd.DataFrame(df4, columns=['total_customers', 'device_type'])
+    labels = data4 ['device_type']
+    values = data4['total_customers']
+    fig4 = go.Figure(data=[go.Pie(labels=labels, values=values, textinfo='label+percent',
+                                 insidetextorientation='radial'
+                                )])
+    st.plotly_chart(fig4)
+
+
+def customers_by_notif() :
+
+    df3 = run_query("SELECT total_customers, notification_reason, channel FROM `sylvan-apogee-402010.neobank_Gold_Tier.unique_customers_mart`")
+    data3 = pd.DataFrame(df3, columns=['total_customers', 'notification_reason','channel'])
+    fig3 = px.funnel(data3, x='total_customers', y='notification_reason', color='channel')
+    st.plotly_chart(fig3)
 
 # Function to plot bar chart for total users per country
 def plot_country_bar_chart(df):
@@ -76,7 +93,8 @@ df_country = pd.DataFrame(data_country)
 def main():
     st.sidebar.title('Departments')
     department = st.sidebar.radio('Select Department', ['Finance', 'Marketing', 'Interactive requests'])
-    st.markdown("# Neobank Transaction Analysis Dashboard")
+    st.markdown("# Neobank Transactions Analysis Dashboard")
+
     if department == 'Finance':
         st.markdown("## Total amount of **transactions** per type")
         st.markdown("> *this chart illustrates the amount of transactions recorded during a year/month for neobank customer's activities*")
@@ -84,9 +102,15 @@ def main():
         st.markdown("## Moving average of transactions")
         st.markdown("> *this chart illustrates the moving average recorded during a year/month for neobank customer's activities*")
         moving_average_transactions()
+
     elif department == 'Marketing':
-        st.markdown("## Total users per country")
-        plot_country_bar_chart(df_country)
+        st.markdown("## Total users per device type")
+        st.markdown("> *this chart illustrates the unique number of users per device*")
+        unique_number_users()
+        st.markdown("## Number of customers by notification type")
+        st.markdown("> *this chart illustrates the Number of customers by notification type*")
+        customers_by_notif()
+
     elif department == 'Interactive requests':
         st.markdown("## Total users per country")
         plot_country_bar_chart(df_country)

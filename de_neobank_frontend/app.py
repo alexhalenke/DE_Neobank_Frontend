@@ -4,6 +4,9 @@ import numpy as np
 import plotly.express as px
 from google.oauth2 import service_account
 from google.cloud import bigquery
+import os
+
+project = os.environ.get("project")
 
 # Create API client.
 credentials = service_account.Credentials.from_service_account_info(
@@ -23,7 +26,7 @@ def run_query(query):
 
 def total_amt_transaction_type():
 
-    df = run_query("SELECT total_amount, year, transactions_type, transaction_group, direction, month FROM `sylvan-apogee-402010.neobank_Gold_Tier.amt_trx_mart` order by year, month")
+    df = run_query(f"SELECT total_amount, year, transactions_type, transaction_group, direction, month FROM `{project}.neobank_Gold_Tier.amt_trx_mart` order by year, month")
     data = pd.DataFrame(df, columns=['total_amount', 'transaction_group', 'year', 'month', 'direction', 'transactions_type'])
     year_filter = st.multiselect('Select Year', options=list(data['year'].unique()), default=list(data['year'].unique()))
     month_filter = st.multiselect('Select Month', options=list(data['month'].unique()), default=list(data['month'].unique()))
@@ -135,7 +138,7 @@ def total_amt_transaction_type():
             <i class='{iconname}' style='font-size: 20px; color: #FAF9F6;'></i>&nbsp;{i3}</p>
         """
         st.markdown(lnk3+htmlstr3, unsafe_allow_html=True)
-        
+
     #plotting Total amount of transactions per type
     fig = px.bar(filtered_data, x='transactions_type', y='total_amount', color='transaction_group')
     fig['layout']['yaxis'].update(autorange = True)
@@ -177,7 +180,7 @@ def total_amt_transaction_type():
         st.write(filtered_data)
 
 def moving_average_transactions():
-    df2 = run_query("SELECT year, month, direction, moving_avg FROM `sylvan-apogee-402010.neobank_Gold_Tier.moving_avg_trx_mart` order by  year, month")
+    df2 = run_query(f"SELECT year, month, direction, moving_avg FROM `{project}.neobank_Gold_Tier.moving_avg_trx_mart` order by  year, month")
     data2 = pd.DataFrame(df2, columns=['year', 'month', 'direction', 'moving_avg'])
     year_filter2 = st.multiselect('Select Year', options=list(data2['year'].unique()), default=list(data2['year'].unique()), key='year_filter2')
     #month_filter2 = st.multiselect('Select Month', options=list(data2['month'].unique()), default=list(data2['month'].unique()), key='month_filter2')
@@ -212,7 +215,7 @@ def moving_average_transactions():
 
 def unique_number_users() :
     import plotly.graph_objects as go
-    df4 = run_query("SELECT total_customers, device_type FROM `sylvan-apogee-402010.neobank_Gold_Tier.customers_by_device_type_mart`")
+    df4 = run_query(f"SELECT total_customers, device_type FROM `{project}.neobank_Gold_Tier.customers_by_device_type_mart`")
     data4 = pd.DataFrame(df4, columns=['total_customers', 'device_type'])
     labels = data4 ['device_type']
     values = data4['total_customers']
@@ -224,7 +227,7 @@ def unique_number_users() :
 
 def customers_by_notif() :
 
-    df3 = run_query("SELECT total_customers, notification_reason, channel FROM `sylvan-apogee-402010.neobank_Gold_Tier.unique_customers_mart`")
+    df3 = run_query(f"SELECT total_customers, notification_reason, channel FROM `{project}.neobank_Gold_Tier.unique_customers_mart`")
     data3 = pd.DataFrame(df3, columns=['total_customers', 'notification_reason','channel'])
     fig3 = px.funnel(data3, x='total_customers', y='notification_reason', color='channel')
     st.plotly_chart(fig3)

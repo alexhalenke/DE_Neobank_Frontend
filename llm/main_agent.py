@@ -4,13 +4,17 @@ import os
 from langchain.sql_database import SQLDatabase
 from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits import create_sql_agent
+import streamlit as st
+
 
 
 def query_database(question):
     # Set up environment variables
-    service_account_file = os.environ.get("service_account_file")  # Change to where your service account key file is located
+    #service_account_file = os.environ.get("service_account_file")
     project = os.environ.get("project")
     dataset = os.environ.get("dataset")
+    service_account_file = os.environ.get("service_account_file")
+
     sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={service_account_file}'
     os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
 
@@ -21,7 +25,8 @@ def query_database(question):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
     agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=False)
     response = agent_executor.invoke({"input": question})
-    return response
+    st.info(response['output'])
+
 
 if __name__ == "__main__":
     result = query_database("How many transations happened in 2018?")

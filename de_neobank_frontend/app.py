@@ -35,7 +35,7 @@ def query_database(question):
     response = agent_executor.invoke({"input": question})
     st.info(response['output'])
 
-project = "modern-water-402010"
+project = os.environ.get("project")
 
 # Create API client.
 credentials = service_account.Credentials.from_service_account_info(
@@ -304,7 +304,7 @@ def main():
 
     elif department == 'Interactive requests':
         with st.form('my_form'):
-            text = st.text_area('Enter text:', 'Please eneter a question for the db')
+            text = st.text_area('Enter text:', 'Please enter a question for the db!')
             submitted = st.form_submit_button('Submit')
             query_database(text)
 

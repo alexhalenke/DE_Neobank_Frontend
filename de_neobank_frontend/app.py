@@ -5,8 +5,10 @@ import plotly.express as px
 from google.oauth2 import service_account
 from google.cloud import bigquery
 import os
+import altair as alt
+import plotly.graph_objects as go
 
-project = os.environ.get("project")
+project = "sylvan-apogee-402010"
 
 # Create API client.
 credentials = service_account.Credentials.from_service_account_info(
@@ -142,8 +144,8 @@ def total_amt_transaction_type():
     #plotting Total amount of transactions per type
     fig = px.bar(filtered_data, x='transactions_type', y='total_amount', color='transaction_group')
     fig['layout']['yaxis'].update(autorange = True)
-    import plotly.graph_objects as go
 
+    #CSS STYLE
     PLOT_BGCOLOR ="#FAF9F6"
     #"#E5E4E2"
 
@@ -187,7 +189,7 @@ def moving_average_transactions():
     #direction_filter = st.multiselect('Select direction', options=list(data2['direction'].unique()), default=list(data2['direction'].unique()))
     filtered_data2 = data2[ data2['year'].isin(year_filter2)  ]
 
-    fig2 = px.bar(filtered_data2, x='month', y="moving_avg", color='direction')
+    fig2 = px.line(filtered_data2, x='month', y="moving_avg", color='direction')
     PLOT_BGCOLOR ="#FAF9F6"
     st.markdown(
         f"""
@@ -222,6 +224,27 @@ def unique_number_users() :
     fig4 = go.Figure(data=[go.Pie(labels=labels, values=values, textinfo='label+percent',
                                  insidetextorientation='radial'
                                 )])
+    PLOT_BGCOLOR ="#FAF9F6"
+    st.markdown(
+        f"""
+        <style>
+        .stPlotlyChart {{
+        outline: 10px solid {PLOT_BGCOLOR};
+        border-radius: 5px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 rgba(0, 0, 0, 0.30);
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+
+    fig4.update_layout(
+    paper_bgcolor=PLOT_BGCOLOR,
+    plot_bgcolor=PLOT_BGCOLOR,
+    title_text="Unique Users",
+    margin=dict(pad=0, r=20, t=50, b=60, l=60)
+)
+
     st.plotly_chart(fig4)
 
 
@@ -230,7 +253,63 @@ def customers_by_notif() :
     df3 = run_query(f"SELECT total_customers, notification_reason, channel FROM `{project}.neobank_Gold_Tier.unique_customers_mart`")
     data3 = pd.DataFrame(df3, columns=['total_customers', 'notification_reason','channel'])
     fig3 = px.funnel(data3, x='total_customers', y='notification_reason', color='channel')
+    PLOT_BGCOLOR ="#FAF9F6"
+    st.markdown(
+        f"""
+        <style>
+        .stPlotlyChart {{
+        outline: 10px solid {PLOT_BGCOLOR};
+        border-radius: 5px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 rgba(0, 0, 0, 0.30);
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+
+    fig3.update_layout(
+    paper_bgcolor=PLOT_BGCOLOR,
+    plot_bgcolor=PLOT_BGCOLOR,
+    title_text="Notification reason",
+    margin=dict(pad=0, r=20, t=50, b=60, l=60)
+)
+
     st.plotly_chart(fig3)
+
+def agesegmentation() :
+    df4 = run_query(f"SELECT total_customers, average_amount_by_age, age_band FROM `{project}.neobank_Gold_Tier.customers_age_mart`")
+    data4 = pd.DataFrame(df4, columns=['total_customers', 'average_amount_by_age','age_band'])
+
+    base = alt.Chart(data4).encode(x='age_band')
+
+    bar = base.mark_bar().encode(y='total_customers')
+
+    line =  base.mark_line(color='red').encode(
+        y2='average_amount_by_age'
+    )
+
+    chart = (bar + line).properties(width=600)
+    PLOT_BGCOLOR ="#FAF9F6"
+    st.markdown(
+        f"""
+        <style>
+        .stAltairChart {{
+        outline: 10px solid {PLOT_BGCOLOR};
+        border-radius: 5px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 rgba(0, 0, 0, 0.30);
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+    fig= st.altair_chart(chart, use_container_width=True)
+    fig.update_layout(
+    paper_bgcolor=PLOT_BGCOLOR,
+    plot_bgcolor=PLOT_BGCOLOR,
+    title_text="Age Segmentation",
+    margin=dict(pad=0, r=20, t=50, b=60, l=60)
+)
+
 
 # Function to plot bar chart for total users per country
 def plot_country_bar_chart(df):
@@ -269,9 +348,14 @@ def main():
         st.markdown("## Total users per device type")
         st.markdown("> *this chart illustrates the unique number of users per device*")
         unique_number_users()
+
         st.markdown("## Number of customers by notification type")
         st.markdown("> *this chart illustrates the Number of customers by notification type*")
         customers_by_notif()
+
+        st.markdown("## Age Segmentation")
+        st.markdown("> *this chart illustrates the Number of customers by notification type*")
+        agesegmentation()
 
     elif department == 'Interactive requests':
         st.markdown("## Total users per country")

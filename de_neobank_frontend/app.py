@@ -30,11 +30,151 @@ def total_amt_transaction_type():
     #direction_filter = st.multiselect('Select direction', options=list(data['direction'].unique()), default=list(data['direction'].unique()))
     transaction_filter = st.multiselect('Select type of transaction', options=list(data['transactions_type'].unique()), default=list(data['transactions_type'].unique()))
     filtered_data = data[ data['year'].isin(year_filter) & data['month'].isin(month_filter) & data['transactions_type'].isin(transaction_filter) ]
-    st.write(filtered_data)
+    # Filtrer les données sur les frais
+    filtered_fee_data = data[data['transaction_group'] == 'FEE']
+    filtered_ohter_data = data[data['transaction_group'] == 'OTHER TRX']
 
+
+    col1,col2,col3 = st.columns(3)
+    lnk = '<img src="https://fonts.gstatic.com/s/i/materialicons/star/v10/24px.svg" width="50" height="50">'
+    lnk2 = '<img src="https://fonts.gstatic.com/s/i/materialicons/monetization_on/v10/24px.svg" width="50" height="50">'
+    lnk3 = '<img src="https://fonts.gstatic.com/s/i/materialicons/account_balance/v10/24px.svg" width="50" height="50">'
+    with col1:
+        st.markdown("<h4>Total transactions amount </h4>", unsafe_allow_html=True)
+        wch_colour_box = (226, 223, 210)
+        # wch_colour_box = (255, 255, 255)
+        wch_colour_font = (0, 0, 0)
+        fontsize = 30
+        valign = "left"
+        iconname = "star"
+        i = round(data["total_amount"].sum(),1)
+
+        htmlstr = f"""
+            <p style='background-color: rgb(
+                {wch_colour_box[0]},
+                {wch_colour_box[1]},
+                {wch_colour_box[2]}, 0.75
+            );
+            color: rgb(
+                {wch_colour_font[0]},
+                {wch_colour_font[1]},
+                {wch_colour_font[2]}, 0.75
+            );
+            font-size: {fontsize}px;
+            border-radius: 7px;
+            padding-top: 40px;
+            padding-bottom: 40px;
+            line-height:25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;'>
+             <i class='{iconname}' style='font-size: 40px; color: #FAF9F6;'></i>&nbsp;{i}</p>
+        """
+        st.markdown(lnk+htmlstr, unsafe_allow_html=True)
+    with col2:
+        st.markdown("<h4>Total transactions fees </h4>", unsafe_allow_html=True)
+        wch_colour_box = (226, 223, 210)
+        # wch_colour_box = (255, 255, 255)
+        wch_colour_font = (0, 0, 0)
+        fontsize = 50
+        valign = "center"
+        iconname = "dollars"
+        i2 = round(filtered_fee_data["total_amount"].sum(),1)
+
+        htmlstr2 = f"""
+            <p style='background-color: rgb(
+                {wch_colour_box[0]},
+                {wch_colour_box[1]},
+                {wch_colour_box[2]}, 0.75
+            );
+            color: rgb(
+                {wch_colour_font[0]},
+                {wch_colour_font[1]},
+                {wch_colour_font[2]}, 0.75
+            );
+            font-size: {fontsize}px;
+            border-radius: 7px;
+            padding-top: 40px;
+            padding-bottom: 40px;
+            line-height:25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;'>
+            <i class='{iconname}' style='font-size: 20px; color: #FAF9F6;'></i>&nbsp;{i2}</p>
+        """
+        st.markdown(lnk2+htmlstr2, unsafe_allow_html=True)
+    with col3:
+        st.markdown("<h4>Total transactions without fees  </h4>", unsafe_allow_html=True)
+        wch_colour_box = (226, 223, 210)
+        # wch_colour_box = (255, 255, 255)
+        wch_colour_font = (0, 0, 0)
+        fontsize = 30
+        valign = "right"
+        iconname = "bank"
+        i3 = round(filtered_ohter_data["total_amount"].sum(),1)
+
+        htmlstr3 = f"""
+            <p style='background-color: rgb(
+                {wch_colour_box[0]},
+                {wch_colour_box[1]},
+                {wch_colour_box[2]}, 0.75
+            );
+            color: rgb(
+                {wch_colour_font[0]},
+                {wch_colour_font[1]},
+                {wch_colour_font[2]}, 0.75
+            );
+            font-size: {fontsize}px;
+            border-radius: 7px;
+            padding-top: 40px;
+            padding-bottom: 40px;
+            line-height:25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;'>
+            <i class='{iconname}' style='font-size: 20px; color: #FAF9F6;'></i>&nbsp;{i3}</p>
+        """
+        st.markdown(lnk3+htmlstr3, unsafe_allow_html=True)
+        
+    #plotting Total amount of transactions per type
     fig = px.bar(filtered_data, x='transactions_type', y='total_amount', color='transaction_group')
     fig['layout']['yaxis'].update(autorange = True)
+    import plotly.graph_objects as go
+
+    PLOT_BGCOLOR ="#FAF9F6"
+    #"#E5E4E2"
+
+    st.markdown(
+        f"""
+        <style>
+        .stPlotlyChart {{
+        outline: 10px solid {PLOT_BGCOLOR};
+        border-radius: 5px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 rgba(0, 0, 0, 0.30);
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+
+    fig.update_layout(
+    paper_bgcolor=PLOT_BGCOLOR,
+    plot_bgcolor=PLOT_BGCOLOR,
+    title_text="Transactions",
+    margin=dict(pad=0, r=20, t=50, b=60, l=60)
+)
+
     st.plotly_chart(fig)
+    if 'clicked' not in st.session_state:
+        st.session_state.clicked = False
+
+    def click_button():
+        st.session_state.clicked = True
+
+    st.button('Show detail values', on_click=click_button)
+    if st.session_state.clicked:
+
+        st.write(filtered_data)
 
 def moving_average_transactions():
     df2 = run_query("SELECT year, month, direction, moving_avg FROM `sylvan-apogee-402010.neobank_Gold_Tier.moving_avg_trx_mart` order by  year, month")
@@ -43,9 +183,28 @@ def moving_average_transactions():
     #month_filter2 = st.multiselect('Select Month', options=list(data2['month'].unique()), default=list(data2['month'].unique()), key='month_filter2')
     #direction_filter = st.multiselect('Select direction', options=list(data2['direction'].unique()), default=list(data2['direction'].unique()))
     filtered_data2 = data2[ data2['year'].isin(year_filter2)  ]
-    st.write(filtered_data2)
 
     fig2 = px.bar(filtered_data2, x='month', y="moving_avg", color='direction')
+    PLOT_BGCOLOR ="#FAF9F6"
+    st.markdown(
+        f"""
+        <style>
+        .stPlotlyChart {{
+        outline: 10px solid {PLOT_BGCOLOR};
+        border-radius: 5px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 rgba(0, 0, 0, 0.30);
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+
+    fig2.update_layout(
+    paper_bgcolor=PLOT_BGCOLOR,
+    plot_bgcolor=PLOT_BGCOLOR,
+    title_text="Transactions",
+    margin=dict(pad=0, r=20, t=50, b=60, l=60)
+)
     st.plotly_chart(fig2)
 
 

@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-
+import plotly.express as px
 from google.oauth2 import service_account
 from google.cloud import bigquery
 
@@ -21,66 +21,33 @@ def run_query(query):
     rows = [dict(row) for row in rows_raw]
     return rows
 
-
-
-moving_average = run_query("SELECT * FROM `sylvan-apogee-402010.neobank_Gold_Tier.moving_avg_trx_mart` LIMIT 1000")
-chart_data = pd.DataFrame(moving_average, columns=["year", "month", "moving_avg"])
-
-selected_year = st.sidebar.selectbox("Select Year", chart_data['year'].unique())
-
-filtered_data = chart_data[chart_data['year'] == selected_year]
-#chart_data['date'] = chart_data['year'] + chart_data['month']
-filtered_data = filtered_data[['month', 'moving_avg']]
-monthly_sum = filtered_data.groupby('month')['moving_avg'].sum()
-st.line_chart(monthly_sum)
-
-
-
-def plot_line_chart(moving_average):
-    device_counts = moving_average['month'].value_counts()
-    st.line_chart(device_counts)
-
-
-
-# Print results.
-# st.write("Some wise words from Shakespeare:")
-#for row in rows:
-#    st.write("✍️ " + row['word'])
-
-import streamlit as st
-import pandas as pd
-import numpy as np
-
-from google.oauth2 import service_account
-from google.cloud import bigquery
-
-# Create API client.
-credentials = service_account.Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"]
-)
-client = bigquery.Client(credentials=credentials)
-
 def total_amt_transaction_type():
-    df = run_query("SELECT total_amount, year, transactions_type,transaction_group, direction, month FROM `sylvan-apogee-402010.neobank_Gold_Tier.amt_trx_mart` LIMIT 100")
-    data= pd.DataFrame(df , columns=['total_amount','transaction_group','year','month','direction'])
 
+    df = run_query("SELECT total_amount, year, transactions_type, transaction_group, direction, month FROM `sylvan-apogee-402010.neobank_Gold_Tier.amt_trx_mart` order by year, month")
+    data = pd.DataFrame(df, columns=['total_amount', 'transaction_group', 'year', 'month', 'direction', 'transactions_type'])
+    year_filter = st.multiselect('Select Year', options=list(data['year'].unique()), default=list(data['year'].unique()))
+    month_filter = st.multiselect('Select Month', options=list(data['month'].unique()), default=list(data['month'].unique()))
+    #direction_filter = st.multiselect('Select direction', options=list(data['direction'].unique()), default=list(data['direction'].unique()))
+    transaction_filter = st.multiselect('Select type of transaction', options=list(data['transactions_type'].unique()), default=list(data['transactions_type'].unique()))
+    filtered_data = data[ data['year'].isin(year_filter) & data['month'].isin(month_filter) & data['transactions_type'].isin(transaction_filter) ]
+    st.write(filtered_data)
 
-
-
-    #year_filter = st.multiselect('Select Year', options=list(data['year'].unique()), default=list(data['year'].unique()))
-    #month_filter = st.multiselect('Select Month', options=list(data['month'].unique()), default=list(data['month'].unique()))
-    direction_filter = st.multiselect('Select direction', options=list(data['direction'].unique()), default=list(data['direction'].unique()))
-    filtered_data =  data['direction'].isin(direction_filter)
-
-   # st.write(filtered_data)
-    st.markdown("## List of unique customers Per Device")
-    import plotly.express as px
-    fig = px.bar(filtered_data, x='transaction_group', y='total_amount', color='transaction_group')
+    fig = px.bar(filtered_data, x='transactions_type', y='total_amount', color='transaction_group')
+    fig['layout']['yaxis'].update(autorange = True)
     st.plotly_chart(fig)
 
+def moving_average_transactions():
+    df2 = run_query("SELECT year, month, direction, moving_avg FROM `sylvan-apogee-402010.neobank_Gold_Tier.moving_avg_trx_mart` order by  year, month")
+    data2 = pd.DataFrame(df2, columns=['year', 'month', 'direction', 'moving_avg'])
+    year_filter2 = st.multiselect('Select Year', options=list(data2['year'].unique()), default=list(data2['year'].unique()), key='year_filter2')
+    #month_filter2 = st.multiselect('Select Month', options=list(data2['month'].unique()), default=list(data2['month'].unique()), key='month_filter2')
+    #direction_filter = st.multiselect('Select direction', options=list(data2['direction'].unique()), default=list(data2['direction'].unique()))
+    filtered_data2 = data2[ data2['year'].isin(year_filter2)  ]
+    st.write(filtered_data2)
 
 
-
+    fig2 = px.bar(filtered_data2, x='month', y="moving_avg", color='direction')
+    st.plotly_chart(fig2)
 # Function to plot bar chart using Streamlit
 def plot_bar_chart(df):
     device_counts = df['Device_Type'].value_counts()
@@ -90,19 +57,6 @@ def plot_bar_chart(df):
 def plot_country_bar_chart(df):
     country_counts = df['Country'].value_counts().sort_values(ascending=False)
     st.bar_chart(country_counts)
-
-def finance_dashboard():
-    st.markdown("## Unique users per device type")
-    plot_bar_chart(df_device)
-
-def marketing_dashboard():
-    st.markdown("## Total users per country")
-    plot_country_bar_chart(df_country)
-
-def chatgpt_dashboard():
-    st.markdown("## Total users per country")
-    plot_country_bar_chart(df_country)
-
 # Generate demo data for device type
 np.random.seed(0)
 data_device = {
@@ -118,23 +72,24 @@ data_country = {
     'Country': np.random.choice(['USA', 'UK', 'Canada', 'Australia', 'Germany'], size=1000)
 }
 df_country = pd.DataFrame(data_country)
-
 # Main Streamlit app
 def main():
     st.sidebar.title('Departments')
-    department = st.sidebar.radio('Select Department', ['Finance', 'Marketing','Interactive requests'])
-
-
+    department = st.sidebar.radio('Select Department', ['Finance', 'Marketing', 'Interactive requests'])
+    st.markdown("# Neobank Transaction Analysis Dashboard")
     if department == 'Finance':
-       # plot_line_chart()
+        st.markdown("## Total amount of **transactions** per type")
+        st.markdown("> *this chart illustrates the amount of transactions recorded during a year/month for neobank customer's activities*")
         total_amt_transaction_type()
+        st.markdown("## Moving average of transactions")
+        st.markdown("> *this chart illustrates the moving average recorded during a year/month for neobank customer's activities*")
+        moving_average_transactions()
     elif department == 'Marketing':
-        marketing_dashboard()
-        finance_dashboard()
-        plot_bar_chart()
+        st.markdown("## Total users per country")
+        plot_country_bar_chart(df_country)
     elif department == 'Interactive requests':
-        chatgpt_dashboard()
-
+        st.markdown("## Total users per country")
+        plot_country_bar_chart(df_country)
 
 if __name__ == "__main__":
     main()

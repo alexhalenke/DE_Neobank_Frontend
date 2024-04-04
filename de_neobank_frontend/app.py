@@ -15,7 +15,6 @@ from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits import create_sql_agent
 
 
-
 def query_database(question):
     # Set up environment variables
     #service_account_file = os.environ.get("service_account_file")
@@ -34,6 +33,8 @@ def query_database(question):
     agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=False)
     response = agent_executor.invoke({"input": question})
     st.info(response['output'])
+
+
 
 project = os.environ.get("project")
 

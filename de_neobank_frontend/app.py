@@ -12,7 +12,7 @@ from sqlalchemy.schema import *
 from langchain.sql_database import SQLDatabase
 from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits import create_sql_agent
-
+import locale
 
 import streamlit as st
 
@@ -83,9 +83,9 @@ def run_query(query):
 
 def total_amt_transaction_type():
 
-    df = run_query(f"SELECT total_amount, year, transactions_type, transaction_group, direction, month FROM `{project}.neobank_Gold_Tier.amt_trx_mart` order by year, month")
+    df = run_query(f"SELECT cast(total_amount as int ) as total_amount, year,  transactions_type, transaction_group, direction, month FROM `{project}.neobank_Gold_Tier.amt_trx_mart` where transactions_state='COMPLETED' order by year, month")
 
-    data = pd.DataFrame(df, columns=['total_amount', 'transaction_group', 'year', 'month', 'direction', 'transactions_type'])
+    data = pd.DataFrame(df, columns=['total_amount', 'transaction_group', 'year', 'month', 'direction', 'transactions_type',' transactions_state'])
    ## data.style.format(
     #{ "total_amount": lambda x : '{:,.1f}'.format(x),
     #},
@@ -94,12 +94,13 @@ def total_amt_transaction_type():
     #)
     year_filter = st.multiselect('Select Year', options=list(data['year'].unique()), default=list(data['year'].unique()))
     month_filter = st.multiselect('Select Month', options=list(data['month'].unique()), default=list(data['month'].unique()))
-    #direction_filter = st.multiselect('Select direction', options=list(data['direction'].unique()), default=list(data['direction'].unique()))
-    transaction_filter = st.multiselect('Select type of transaction', options=list(data['transactions_type'].unique()), default=list(data['transactions_type'].unique()))
-    filtered_data = data[ data['year'].isin(year_filter) & data['month'].isin(month_filter) & data['transactions_type'].isin(transaction_filter) ]
+    direction_filter = st.multiselect('Select direction', options=list(data['direction'].unique()), default=list(data['direction'].unique()))
+    #transaction_state_filter = st.multiselect('Select transaction state', options=list(data['transactions_state'].unique()), default=list(data['transactions_state'].unique()))
+    transaction_type_filter = st.multiselect('Select type of transaction', options=list(data['transactions_type'].unique()), default=list(data['transactions_type'].unique()))
+    filtered_data = data[ data['year'].isin(year_filter) & data['month'].isin(month_filter) & data['transactions_type'].isin(transaction_type_filter) & data['direction'].isin(direction_filter)]
     # Filtrer les données sur les frais
-    filtered_fee_data = data[data['transaction_group'] == 'FEE']
-    filtered_ohter_data = data[data['transaction_group'] == 'OTHER TRX']
+    filtered_fee_data = filtered_data[filtered_data['transaction_group'] == 'FEE']
+    filtered_ohter_data = filtered_data[filtered_data['transaction_group'] == 'OTHER TRX']
 
 
     col1,col2,col3 = st.columns(3)
@@ -114,7 +115,11 @@ def total_amt_transaction_type():
         fontsize = 30
         valign = "left"
         iconname = "star"
-        i = round(data["total_amount"].sum(),1)
+        #formatted_sum =  round(data["total_amount"].sum(),1)
+        #i = '{:,.1f}'.format(formatted_sum)
+        #locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+        i = '${:,.0f}'.format(filtered_data["total_amount"].sum())
+       # i = round(filtered_fee_data["total_amount"].sum(),1)
 
 
         htmlstr = f"""
@@ -144,10 +149,11 @@ def total_amt_transaction_type():
         wch_colour_box = (226, 223, 210)
         # wch_colour_box = (255, 255, 255)
         wch_colour_font = (0, 0, 0)
-        fontsize = 50
+        fontsize = 30
         valign = "center"
         iconname = "dollars"
-        i2 = round(filtered_fee_data["total_amount"].sum(),1)
+      #  i2 = round(filtered_fee_data["total_amount"].sum(),1)
+        i2 = '${:,.0f}'.format(filtered_fee_data["total_amount"].sum())
 
         htmlstr2 = f"""
             <p style='background-color: rgb(
@@ -179,7 +185,8 @@ def total_amt_transaction_type():
         fontsize = 30
         valign = "right"
         iconname = "bank"
-        i3 = round(filtered_ohter_data["total_amount"].sum(),1)
+        i3 = '${:,.0f}'.format(filtered_ohter_data["total_amount"].sum())
+        #i3 = round(filtered_ohter_data["total_amount"].sum(),1)
 
         htmlstr3 = f"""
             <p style='background-color: rgb(

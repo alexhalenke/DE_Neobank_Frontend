@@ -5,8 +5,65 @@ import plotly.express as px
 from google.oauth2 import service_account
 from google.cloud import bigquery
 import os
+import altair as alt
+import plotly.graph_objects as go
+from sqlalchemy import *
+from sqlalchemy.schema import *
+from langchain.sql_database import SQLDatabase
+from langchain_openai import ChatOpenAI
+from langchain_community.agent_toolkits import create_sql_agent
 
-project = os.environ.get("project")
+
+import streamlit as st
+
+from sqlalchemy import *
+from sqlalchemy.schema import *
+from langchain.sql_database import SQLDatabase
+from langchain_openai import ChatOpenAI
+from langchain_community.agent_toolkits import create_sql_agent
+
+
+project = "sylvan-apogee-402010"
+
+def query_database(question):
+    # Set up environment variables
+    #service_account_file = os.environ.get("service_account_file")
+    project = os.environ.get("project")
+    dataset = os.environ.get("dataset")
+    service_account_file = os.environ.get("service_account_file")
+
+    sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={service_account_file}'
+    os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
+
+    # Connect to the database
+    db = SQLDatabase.from_uri(sqlalchemy_url)
+
+    # Convert questions to a SQL query
+    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+    agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbe=False)
+    response = agent_executor.invoke({"input": question})
+    st.info(response['output'])
+
+
+
+def query_database(question):
+    # Set up environment variables
+    #service_account_file = os.environ.get("service_account_file")
+    project = os.environ.get("project")
+    dataset = os.environ.get("dataset")
+    service_account_file = os.environ.get("service_account_file")
+
+    sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={service_account_file}'
+    os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
+
+    # Connect to the database
+    db = SQLDatabase.from_uri(sqlalchemy_url)
+
+    # Convert questions to a SQL query
+    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+    agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=False)
+    response = agent_executor.invoke({"input": question})
+    st.info(response['output'])
 
 # Create API client.
 credentials = service_account.Credentials.from_service_account_info(
@@ -27,7 +84,14 @@ def run_query(query):
 def total_amt_transaction_type():
 
     df = run_query(f"SELECT total_amount, year, transactions_type, transaction_group, direction, month FROM `{project}.neobank_Gold_Tier.amt_trx_mart` order by year, month")
+
     data = pd.DataFrame(df, columns=['total_amount', 'transaction_group', 'year', 'month', 'direction', 'transactions_type'])
+   ## data.style.format(
+    #{ "total_amount": lambda x : '{:,.1f}'.format(x),
+    #},
+    #thousands=' ',
+    #decimal=',',
+    #)
     year_filter = st.multiselect('Select Year', options=list(data['year'].unique()), default=list(data['year'].unique()))
     month_filter = st.multiselect('Select Month', options=list(data['month'].unique()), default=list(data['month'].unique()))
     #direction_filter = st.multiselect('Select direction', options=list(data['direction'].unique()), default=list(data['direction'].unique()))
@@ -51,6 +115,7 @@ def total_amt_transaction_type():
         valign = "left"
         iconname = "star"
         i = round(data["total_amount"].sum(),1)
+
 
         htmlstr = f"""
             <p style='background-color: rgb(
@@ -142,8 +207,8 @@ def total_amt_transaction_type():
     #plotting Total amount of transactions per type
     fig = px.bar(filtered_data, x='transactions_type', y='total_amount', color='transaction_group')
     fig['layout']['yaxis'].update(autorange = True)
-    import plotly.graph_objects as go
 
+    #CSS STYLE
     PLOT_BGCOLOR ="#FAF9F6"
     #"#E5E4E2"
 
@@ -187,7 +252,7 @@ def moving_average_transactions():
     #direction_filter = st.multiselect('Select direction', options=list(data2['direction'].unique()), default=list(data2['direction'].unique()))
     filtered_data2 = data2[ data2['year'].isin(year_filter2)  ]
 
-    fig2 = px.bar(filtered_data2, x='month', y="moving_avg", color='direction')
+    fig2 = px.line(filtered_data2, x='month', y="moving_avg", color='direction')
     PLOT_BGCOLOR ="#FAF9F6"
     st.markdown(
         f"""
@@ -222,6 +287,27 @@ def unique_number_users() :
     fig4 = go.Figure(data=[go.Pie(labels=labels, values=values, textinfo='label+percent',
                                  insidetextorientation='radial'
                                 )])
+    PLOT_BGCOLOR ="#FAF9F6"
+    st.markdown(
+        f"""
+        <style>
+        .stPlotlyChart {{
+        outline: 10px solid {PLOT_BGCOLOR};
+        border-radius: 5px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 rgba(0, 0, 0, 0.30);
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+
+    fig4.update_layout(
+    paper_bgcolor=PLOT_BGCOLOR,
+    plot_bgcolor=PLOT_BGCOLOR,
+    title_text="Unique Users",
+    margin=dict(pad=0, r=20, t=50, b=60, l=60)
+)
+
     st.plotly_chart(fig4)
 
 
@@ -230,29 +316,70 @@ def customers_by_notif() :
     df3 = run_query(f"SELECT total_customers, notification_reason, channel FROM `{project}.neobank_Gold_Tier.unique_customers_mart`")
     data3 = pd.DataFrame(df3, columns=['total_customers', 'notification_reason','channel'])
     fig3 = px.funnel(data3, x='total_customers', y='notification_reason', color='channel')
+    PLOT_BGCOLOR ="#FAF9F6"
+    st.markdown(
+        f"""
+        <style>
+        .stPlotlyChart {{
+        outline: 10px solid {PLOT_BGCOLOR};
+        border-radius: 5px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 rgba(0, 0, 0, 0.30);
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+
+    fig3.update_layout(
+    paper_bgcolor=PLOT_BGCOLOR,
+    plot_bgcolor=PLOT_BGCOLOR,
+    title_text="Notification reason",
+    margin=dict(pad=0, r=20, t=50, b=60, l=60)
+)
+
     st.plotly_chart(fig3)
 
-# Function to plot bar chart for total users per country
-def plot_country_bar_chart(df):
-    country_counts = df['Country'].value_counts().sort_values(ascending=False)
-    st.bar_chart(country_counts)
-# Generate demo data for device type
-np.random.seed(0)
-data_device = {
-    'User_ID': np.arange(1000),
-    'Device_Type': np.random.choice(['Desktop', 'Mobile', 'Tablet'], size=1000)
-}
-df_device = pd.DataFrame(data_device)
+def agesegmentation() :
+    df4 = run_query(f"SELECT total_customers, average_amount_by_age, age_band FROM `{project}.neobank_Gold_Tier.customers_age_mart`")
+    data4 = pd.DataFrame(df4, columns=['total_customers', 'average_amount_by_age','age_band'])
 
-# Generate demo data for country
-np.random.seed(0)
-data_country = {
-    'User_ID': np.arange(1000),
-    'Country': np.random.choice(['USA', 'UK', 'Canada', 'Australia', 'Germany'], size=1000)
-}
-df_country = pd.DataFrame(data_country)
+    base = alt.Chart(data4).encode(x='age_band')
+
+    bar = base.mark_bar().encode(y='total_customers')
+
+    line =  base.mark_line(color='red').encode(
+        y2='average_amount_by_age'
+    )
+
+    chart = (bar + line).properties(width=600)
+    PLOT_BGCOLOR ="#FAF9F6"
+    st.markdown(
+        f"""
+        <style>
+        .stAltairChart {{
+        outline: 10px solid {PLOT_BGCOLOR};
+        border-radius: 5px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 rgba(0, 0, 0, 0.30);
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+    st.altair_chart(chart, use_container_width=True)
+
+def readme() :
+
+    lnk4 = '<img src="https://fonts.gstatic.com/s/i/materialicons/menu_book/v10/24px.svg" width="50" height="50">'
+    st.markdown(lnk4+"<h4> Read Me </h4>", unsafe_allow_html=True)
+    st.markdown("* This dashboard is updated everyday at 6 am Europe-West Timezone", unsafe_allow_html=True)
+    st.markdown("* The data shown on the dashboard is sourced from neobank transactions", unsafe_allow_html=True)
+    st.markdown("* To viit the full code for this dashboard, please visit this [Link](https://github.com/alexhalenke/DE_Neobank_Frontend) ", unsafe_allow_html=True)
 # Main Streamlit app
 def main():
+    st.sidebar.title('Read Me')
+    check1 = st.sidebar.checkbox('Instructions')
+    if check1:
+        readme()
     st.sidebar.title('Departments')
     department = st.sidebar.radio('Select Department', ['Finance', 'Marketing', 'Interactive requests'])
     st.markdown("# Neobank Transactions Analysis Dashboard")
@@ -269,13 +396,20 @@ def main():
         st.markdown("## Total users per device type")
         st.markdown("> *this chart illustrates the unique number of users per device*")
         unique_number_users()
+
         st.markdown("## Number of customers by notification type")
         st.markdown("> *this chart illustrates the Number of customers by notification type*")
         customers_by_notif()
 
+        st.markdown("## Age Segmentation")
+        st.markdown("> *this chart illustrates the Age segmentation of neobank's users*")
+        agesegmentation()
+
     elif department == 'Interactive requests':
-        st.markdown("## Total users per country")
-        plot_country_bar_chart(df_country)
+        with st.form('my_form'):
+            text = st.text_area('Enter text:', 'Please enter a question for the db!')
+            submitted = st.form_submit_button('Submit')
+            query_database(text)
 
 if __name__ == "__main__":
     main()

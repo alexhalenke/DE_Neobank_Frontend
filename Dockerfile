@@ -6,22 +6,26 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Force the stdout and stderr streams to be unbuffered.
 ENV PYTHONUNBUFFERED 1
 
-# Setup workdir
+#Setup workdir
 WORKDIR /app
 
-# Copy project files
-COPY ./pyproject.toml ./pyproject.toml
-COPY ./poetry.lock ./poetry.lock
-COPY ./de_neobank_frontend ./neobank_gold
+COPY ./pyproject.toml  ./pyproject.toml
+COPY ./poetry.lock  ./poetry.lock
+COPY ./de_neobank_frontend  ./neobank_gold
+COPY ./llm ./llm
+COPY ./.gcp_keys/ ./.gcp_keys
 
-# Install Poetry
-RUN pip3 install --no-cache-dir poetry
+ENV project=modern-water-402010
+ENV dataset=neobank_Silver_Tier
+ENV service_account_file=/app/.gcp_keys/le-wagon-de-bootcamp.json
 
-# Install dependencies using Poetry
-RUN poetry install --no-root
+RUN apt-get update \
+    && apt-get -y upgrade \
+    && pip3 install --no-cache-dir poetry \
+    && poetry install --only main \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Expose port 8501 for Streamlit
 EXPOSE 8501
 
-# Set entrypoint to "poetry run" to execute commands within the Poetry environment
-ENTRYPOINT ["poetry", "run"]
+ENTRYPOINT [ "poetry", "run" ]

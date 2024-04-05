@@ -23,7 +23,7 @@ from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits import create_sql_agent
 
 
-project = "modern-water-402010"
+project = os.environ.get("project")
 
 def query_database(question):
     # Set up environment variables

@@ -7,8 +7,32 @@ from google.cloud import bigquery
 import os
 import altair as alt
 import plotly.graph_objects as go
+from sqlalchemy import *
+from sqlalchemy.schema import *
+from langchain.sql_database import SQLDatabase
+from langchain_openai import ChatOpenAI
+from langchain_community.agent_toolkits import create_sql_agent
 
-project = "sylvan-apogee-402010"
+
+project = os.environ.get("project")
+def query_database(question):
+    # Set up environment variables
+    #service_account_file = os.environ.get("service_account_file")
+    project = os.environ.get("project")
+    dataset = os.environ.get("dataset")
+    service_account_file = os.environ.get("service_account_file")
+
+    sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={service_account_file}'
+    os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
+
+    # Connect to the database
+    db = SQLDatabase.from_uri(sqlalchemy_url)
+
+    # Convert questions to a SQL query
+    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+    agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=False)
+    response = agent_executor.invoke({"input": question})
+    st.info(response['output'])
 
 # Create API client.
 credentials = service_account.Credentials.from_service_account_info(
@@ -357,9 +381,11 @@ def main():
         st.markdown("> *this chart illustrates the Number of customers by notification type*")
         agesegmentation()
 
-    elif department == 'Interactive requests':
-        st.markdown("## Total users per country")
-        plot_country_bar_chart(df_country)
+       elif department == 'Interactive requests':
+        with st.form('my_form'):
+            text = st.text_area('Enter text:', 'Please enter a question for the db!')
+            submitted = st.form_submit_button('Submit')
+            query_database(text)
 
 if __name__ == "__main__":
     main()

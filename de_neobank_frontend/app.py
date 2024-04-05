@@ -23,6 +23,8 @@ from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits import create_sql_agent
 
 
+project = "sylvan-apogee-402010"
+
 def query_database(question):
     # Set up environment variables
     #service_account_file = os.environ.get("service_account_file")
@@ -44,7 +46,6 @@ def query_database(question):
 
 
 
-project = os.environ.get("project")
 def query_database(question):
     # Set up environment variables
     #service_account_file = os.environ.get("service_account_file")
@@ -83,7 +84,14 @@ def run_query(query):
 def total_amt_transaction_type():
 
     df = run_query(f"SELECT total_amount, year, transactions_type, transaction_group, direction, month FROM `{project}.neobank_Gold_Tier.amt_trx_mart` order by year, month")
+
     data = pd.DataFrame(df, columns=['total_amount', 'transaction_group', 'year', 'month', 'direction', 'transactions_type'])
+   ## data.style.format(
+    #{ "total_amount": lambda x : '{:,.1f}'.format(x),
+    #},
+    #thousands=' ',
+    #decimal=',',
+    #)
     year_filter = st.multiselect('Select Year', options=list(data['year'].unique()), default=list(data['year'].unique()))
     month_filter = st.multiselect('Select Month', options=list(data['month'].unique()), default=list(data['month'].unique()))
     #direction_filter = st.multiselect('Select direction', options=list(data['direction'].unique()), default=list(data['direction'].unique()))
@@ -107,6 +115,7 @@ def total_amt_transaction_type():
         valign = "left"
         iconname = "star"
         i = round(data["total_amount"].sum(),1)
+
 
         htmlstr = f"""
             <p style='background-color: rgb(
@@ -356,36 +365,21 @@ def agesegmentation() :
         """, unsafe_allow_html=True
     )
 
-    fig= st.altair_chart(chart, use_container_width=True)
-    fig.update_layout(
-    paper_bgcolor=PLOT_BGCOLOR,
-    plot_bgcolor=PLOT_BGCOLOR,
-    title_text="Age Segmentation",
-    margin=dict(pad=0, r=20, t=50, b=60, l=60)
-)
+    st.altair_chart(chart, use_container_width=True)
 
+def readme() :
 
-# Function to plot bar chart for total users per country
-def plot_country_bar_chart(df):
-    country_counts = df['Country'].value_counts().sort_values(ascending=False)
-    st.bar_chart(country_counts)
-# Generate demo data for device type
-np.random.seed(0)
-data_device = {
-    'User_ID': np.arange(1000),
-    'Device_Type': np.random.choice(['Desktop', 'Mobile', 'Tablet'], size=1000)
-}
-df_device = pd.DataFrame(data_device)
-
-# Generate demo data for country
-np.random.seed(0)
-data_country = {
-    'User_ID': np.arange(1000),
-    'Country': np.random.choice(['USA', 'UK', 'Canada', 'Australia', 'Germany'], size=1000)
-}
-df_country = pd.DataFrame(data_country)
+    lnk4 = '<img src="https://fonts.gstatic.com/s/i/materialicons/menu_book/v10/24px.svg" width="50" height="50">'
+    st.markdown(lnk4+"<h4> Read Me </h4>", unsafe_allow_html=True)
+    st.markdown("* This dashboard is updated everyday at 6 am Europe-West Timezone", unsafe_allow_html=True)
+    st.markdown("* The data shown on the dashboard is sourced from neobank transactions", unsafe_allow_html=True)
+    st.markdown("* To viit the full code for this dashboard, please visit this [Link](https://github.com/alexhalenke/DE_Neobank_Frontend) ", unsafe_allow_html=True)
 # Main Streamlit app
 def main():
+    st.sidebar.title('Read Me')
+    check1 = st.sidebar.checkbox('Instructions')
+    if check1:
+        readme()
     st.sidebar.title('Departments')
     department = st.sidebar.radio('Select Department', ['Finance', 'Marketing', 'Interactive requests'])
     st.markdown("# Neobank Transactions Analysis Dashboard")
@@ -408,7 +402,7 @@ def main():
         customers_by_notif()
 
         st.markdown("## Age Segmentation")
-        st.markdown("> *this chart illustrates the Number of customers by notification type*")
+        st.markdown("> *this chart illustrates the Age segmentation of neobank's users*")
         agesegmentation()
 
     elif department == 'Interactive requests':

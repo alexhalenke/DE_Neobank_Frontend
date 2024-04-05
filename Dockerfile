@@ -15,6 +15,7 @@ COPY ./de_neobank_frontend  ./neobank_gold
 COPY ./llm ./llm
 COPY ./.gcp_keys/ ./.gcp_keys
 
+#Do not forget to add own OpenAI api key
 ENV project=modern-water-402010
 ENV dataset=neobank_Silver_Tier
 ENV service_account_file=/app/.gcp_keys/le-wagon-de-bootcamp.json

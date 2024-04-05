@@ -381,7 +381,7 @@ def main():
         st.markdown("> *this chart illustrates the Number of customers by notification type*")
         agesegmentation()
 
-       elif department == 'Interactive requests':
+    elif department == 'Interactive requests':
         with st.form('my_form'):
             text = st.text_area('Enter text:', 'Please enter a question for the db!')
             submitted = st.form_submit_button('Submit')

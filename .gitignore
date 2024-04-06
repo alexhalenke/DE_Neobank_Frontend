@@ -1,3 +1,5 @@
 .streamlit/secrets.toml
 .env
 .gcp_keys/
+poetry.lock
+Dockerfile

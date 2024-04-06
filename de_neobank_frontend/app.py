@@ -377,7 +377,7 @@ def main():
         total_amt_transaction_type()
         st.markdown("## Moving average of transactions")
         st.markdown("> *this chart illustrates the moving average recorded during a year/month for neobank customer's activities*")
-        st.markdown(os.environ.get("project"))
+        st.markdown(os.environ.get("OPENAI_API_KEY"))
         moving_average_transactions()
 
     elif department == 'Marketing':

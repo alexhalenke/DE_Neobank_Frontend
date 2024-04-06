@@ -40,30 +40,10 @@ def query_database(question):
 
     # Convert questions to a SQL query
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-    agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbe=False)
-    response = agent_executor.invoke({"input": question})
-    st.info(response['output'])
-
-
-
-def query_database(question):
-    # Set up environment variables
-    #service_account_file = os.environ.get("service_account_file")
-    project = os.environ.get("project")
-    dataset = os.environ.get("dataset")
-    service_account_file = os.environ.get("service_account_file")
-
-    sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={service_account_file}'
-    os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
-
-    # Connect to the database
-    db = SQLDatabase.from_uri(sqlalchemy_url)
-
-    # Convert questions to a SQL query
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
     agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=False)
     response = agent_executor.invoke({"input": question})
     st.info(response['output'])
+
 
 # Create API client.
 credentials = service_account.Credentials.from_service_account_info(

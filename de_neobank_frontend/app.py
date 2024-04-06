@@ -22,6 +22,11 @@ from langchain.sql_database import SQLDatabase
 from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits import create_sql_agent
 
+import tempfile
+
+import json
+import attr
+
 
 project = os.environ.get("project")
 
@@ -30,9 +35,27 @@ def query_database(question):
     #service_account_file = os.environ.get("service_account_file")
     project = os.environ.get("project")
     dataset = os.environ.get("dataset")
-    service_account_file = os.environ.get("service_account_file")
+    #service_account_file = os.environ.get("service_account_file")
 
-    sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={service_account_file}'
+
+    service_account_content = st.secrets["service_account_file"]
+    service_account_content = {key: value for key, value in service_account_content.items() if isinstance(value, (int, float, str, list, dict))}
+    print(service_account_content)
+    print(type(service_account_content))
+
+    # Write service account content to a temporary file
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+        json.dump(service_account_content, temp_file)
+        credentials_path = temp_file.name
+        print(credentials_path)
+    print(credentials_path)
+    with open(credentials_path, 'r') as file:
+        file_content=json.load(file)
+        print(file_content)
+        print(type(file_content))
+
+
+    sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={credentials_path}'
     os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
 
     # Connect to the database

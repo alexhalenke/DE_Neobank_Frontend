@@ -40,7 +40,7 @@ def query_database(question):
 
     # Convert questions to a SQL query
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-    agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbe=False)
+    agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=False)
     response = agent_executor.invoke({"input": question})
     st.info(response['output'])
 

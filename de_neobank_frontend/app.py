@@ -30,7 +30,7 @@ def query_database(question):
     #service_account_file = os.environ.get("service_account_file")
     project = os.environ.get("project")
     dataset = os.environ.get("dataset")
-    service_account_file = os.environ.get("service_account_file")
+    #service_account_file = os.environ.get("service_account_file")
 
     sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={service_account_file}'
     os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")

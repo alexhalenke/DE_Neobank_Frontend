@@ -1,4 +1,5 @@
 # Transactions ELT Pipeline for a Neobank
+(This is the frontend of our project. For accessing the backend [https://github.com/alexhalenke/DE_Neobank_Frontend](https://github.com/alexhalenke/DE_Neobank_Backend))
 
 ## Table of Contents
 - [Project Goal]

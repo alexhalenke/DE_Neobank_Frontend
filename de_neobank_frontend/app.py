@@ -29,7 +29,7 @@ import json
 
 project = os.environ.get("project")
 
-def query_database(question):
+def query_database(question, api_key):
     # Set up environment variables
     #service_account_file = os.environ.get("service_account_file")
     project = os.environ.get("project")
@@ -51,7 +51,7 @@ def query_database(question):
 
 
     sqlalchemy_url = f'bigquery://{project}/{dataset}?credentials_path={credentials_path}'
-    os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
+    os.environ["OPENAI_API_KEY"] = api_key
 
     # Connect to the database
     db = SQLDatabase.from_uri(sqlalchemy_url)
@@ -411,10 +411,18 @@ def main():
         agesegmentation()
 
     elif department == 'Interactive requests':
-        with st.form('my_form'):
-            text = st.text_area('Enter text:', 'Please enter a question for the db!')
-            submitted = st.form_submit_button('Submit')
-            query_database(text)
+        # Prompt user for OpenAI API key
+        api_key = st.text_input("Enter your OpenAI API key:", type="password")
+
+        # If API key provided, display form for submitting questions
+        if api_key:
+            with st.form('my_form'):
+                text = st.text_area('Enter text:', 'Please enter a question for the db!')
+                submitted = st.form_submit_button('Submit')
+
+            # If form submitted, query the database
+            if submitted:
+                query_database(text, api_key)
 
 if __name__ == "__main__":
     main()
